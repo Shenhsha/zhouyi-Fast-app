@@ -1,0 +1,719 @@
+<template>
+  <div class="container">
+    <!-- 首页：选择起卦方式 -->
+    <div class="page" if="{{currentPage === 'home'}}">
+      <text class="title">周易起卦</text>
+      <text class="subtitle">心诚则灵 · 三不占</text>
+      <div class="menu-list">
+        <text class="menu-item" @click="goToRitual('shake')">手动摇卦</text>
+        <text class="menu-item" @click="goToRitual('manual')">手工指定</text>
+        <text class="menu-item" @click="startDivination('time')">时间起卦</text>
+        <text class="menu-item" @click="startDivination('auto')">手环自动</text>
+      </div>
+    </div>
+
+    <!-- 三不占原则页面 -->
+    <div class="page" if="{{currentPage === 'ritual'}}">
+      <text class="title-small">三不占原则</text>
+      <div class="card">
+        <text class="rule-title">① 不诚不占</text>
+        <text class="rule-text">此乃求教于神明，首重真诚。</text>
+      </div>
+      <div class="card">
+        <text class="rule-title">② 不义不占</text>
+        <text class="rule-text">不合乎正当性及合理性的问题，不必占问。</text>
+      </div>
+      <div class="card">
+        <text class="rule-title">③ 不疑不占</text>
+        <text class="rule-text">必须是理性难以测度之事。</text>
+      </div>
+      <text class="title-small mt">起卦须知</text>
+      <text class="notice">集中意念，心中默念所测之事，一事一卦。</text>
+      <text class="btn" @click="proceedToAction()">开始起卦</text>
+      <text class="btn-outline" @click="goHome()">返回</text>
+    </div>
+
+    <!-- 起卦页面 -->
+    <div class="page" if="{{currentPage === 'action'}}">
+      <text class="title-small">{{actionTitle}}</text>
+      <text class="subtitle" if="{{currentMode === 'shake'}}">点击按钮抛掷铜钱</text>
+      <text class="subtitle" if="{{currentMode === 'manual'}}">点击爻位切换阴阳</text>
+      
+      <!-- 铜钱动画区 -->
+      <div class="coin-area" if="{{currentMode === 'shake'}}">
+        <div class="coin-row">
+          <text class="coin">{{coin1}}</text>
+          <text class="coin">{{coin2}}</text>
+          <text class="coin">{{coin3}}</text>
+        </div>
+      </div>
+      <text class="shake-result" if="{{currentMode === 'shake'}}">{{shakeResult}}</text>
+
+      <!-- 卦象预览 -->
+      <div class="hexagram-container">
+        <div class="yao-row" for="{{line in previewLines}}" @click="toggleLine(line.index)" if="{{currentMode === 'manual'}}">
+          <div class="yang-line" if="{{line.isYang}}"></div>
+          <div class="yin-line" if="{{!line.isYang}}">
+            <div class="line"></div>
+            <div class="line"></div>
+          </div>
+        </div>
+        <div class="yao-row" for="{{line in previewLines}}" elif="{{currentMode === 'shake'}}">
+          <div class="yang-line" if="{{line.isYang}}"></div>
+          <div class="yin-line" if="{{!line.isYang}}">
+            <div class="line"></div>
+            <div class="line"></div>
+          </div>
+          <text class="old-mark" if="{{line.isOld}}">{{line.value === 9 ? '○' : '×'}}</text>
+        </div>
+      </div>
+
+      <text class="btn" @click="shakeBtnClick()" if="{{currentMode === 'shake'}}">{{shakeText}}</text>
+      <text class="btn" @click="showResult()" if="{{currentMode === 'manual'}}">确定</text>
+      <text class="btn-outline" @click="goRitual()">返回</text>
+    </div>
+
+    <!-- 结果页面 -->
+    <div class="page result-page" if="{{currentPage === 'result'}}">
+      <text class="result-title" style="margin-top: {{showChange ? 520 : 180}}px;">{{resultGua.name}}</text>
+      <text class="result-subtitle">{{showChange ? '本卦' : '本卦'}}</text>
+      
+      <div class="hexagram-display">
+        <div class="yao-row" for="{{line in resultLines}}">
+          <div class="yang-line" if="{{line.isYang}}">
+            <text class="old-mark" if="{{line.isOld}}">○</text>
+          </div>
+          <div class="yin-line" if="{{!line.isYang}}">
+            <div class="yin-line-left"></div>
+            <div class="yin-line-space"></div>
+            <div class="yin-line-right">
+              <text class="old-mark" if="{{line.isOld}}">×</text>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="change-section" if="{{showChange}}">
+        <text class="result-title" style="margin-top: 20px; font-size: 48px;">{{changedGua.name}}</text>
+        <text class="result-subtitle" style="margin-top: 10px; margin-bottom: 18px;">变卦</text>
+        <div class="hexagram-display small">
+          <div class="yao-row" for="{{line in changedLines}}">
+            <div class="yang-line" if="{{line.isYang}}"></div>
+            <div class="yin-line" if="{{!line.isYang}}">
+              <div class="yin-line-left"></div>
+              <div class="yin-line-space"></div>
+              <div class="yin-line-right"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" if="{{showChange}}">
+        <text class="card-label">变</text><text class="card-colon">:</text><text class="card-content">{{changedGua.ci}}</text>
+      </div>
+
+      <div class="card">
+        <text class="card-label">本</text><text class="card-colon">:</text><text class="card-content">{{resultGua.ci}}</text>
+      </div>
+
+      <div class="card">
+        <text class="card-label">解</text><text class="card-colon">:</text><text class="card-content">{{resultGua.desc}}</text>
+      </div>
+
+      <text class="btn" @click="resetApp()">重新起卦</text>
+    </div>
+  </div>
+</template>
+
+<script>
+  import vibrator from '@system.vibrator'
+
+  export default {
+    data: {
+      currentPage: 'home',
+      currentMode: '',
+      actionTitle: '起卦',
+      shakeCount: 0,
+      shakeText: '抛掷铜钱 (0/6)',
+      coin1: '字',
+      coin2: '字',
+      coin3: '字',
+      shakeResult: '准备抛掷',
+      isShaking: false,
+      currentLines: [],
+      previewLines: [],
+      resultLines: [],
+      changedLines: [],
+      resultGua: { name: '', ci: '', desc: '' },
+      changedGua: { name: '', ci: '' },
+      showChange: false,
+      hexagramData: {
+        '111111': { name: '乾为天', ci: '元，亨，利，贞。', desc: '大吉之象，宜进取，但需刚健中正。' },
+        '000000': { name: '坤为地', ci: '元，亨，利牝马之贞。', desc: '厚德载物，宜顺势而为，包容万物。' },
+        '100010': { name: '水雷屯', ci: '元，亨，利，贞。勿用有攸往。', desc: '万事起头难，宜积蓄力量，不可轻进。' },
+        '010001': { name: '山水蒙', ci: '亨。匪我求童蒙，童蒙求我。', desc: '启蒙之时，宜求知，切勿盲目行动。' },
+        '111010': { name: '水天需', ci: '有孚，光亨，贞吉。利涉大川。', desc: '等待时机，饮食宴乐，积蓄以待。' },
+        '010111': { name: '天水讼', ci: '有孚，窒惕，中吉，终凶。', desc: '争执之象，宜和解，不可争强好胜。' },
+        '010000': { name: '地水师', ci: '贞，丈人，吉，无咎。', desc: '行军打仗之象，需要严明的纪律和领袖。' },
+        '000010': { name: '水地比', ci: '吉。原筮，元永贞，无咎。', desc: '亲密比辅，团结互助，诸事皆顺。' },
+        '111011': { name: '风天小畜', ci: '亨。密云不雨，自我西郊。', desc: '力量稍显不足，宜蓄养实力，待机而动。' },
+        '110111': { name: '天泽履', ci: '履虎尾，不咥人，亨。', desc: '如履薄冰，需小心谨慎，遵守礼仪。' },
+        '111000': { name: '天地否', ci: '否之匪人，不利君子贞，大往小来。', desc: '天地不交，闭塞不通，宜韬光养晦。' },
+        '000111': { name: '地天泰', ci: '小往大来，吉，亨。', desc: '天地交泰，通达顺利，小往大来。' },
+        '101111': { name: '天火同人', ci: '同人于野，亨。利涉大川。', desc: '与人和同，集思广益，利于合作。' },
+        '111101': { name: '火天大有', ci: '元亨。', desc: '盛大丰有，如日中天，多喜多福。' },
+        '001000': { name: '地山谦', ci: '亨，君子有终。', desc: '谦虚受益，内高外低，诸事吉利。' },
+        '000100': { name: '雷地豫', ci: '利建侯行师。', desc: '雷出地奋，顺时而动，安乐预备。' },
+        '100110': { name: '泽雷随', ci: '元亨利贞，无咎。', desc: '随顺之时，顺应时势，灵活变通。' },
+        '011001': { name: '山风蛊', ci: '元亨，利涉大川。', desc: '蛊坏之象，需整顿改革，拨乱反正。' },
+        '110000': { name: '地泽临', ci: '元，亨，利，贞。至于八月有凶。', desc: '居高临下，渐渐壮大，需防盛极而衰。' },
+        '000011': { name: '风地观', ci: '盥而不荐，有孚颙若。', desc: '观摩瞻仰，诚信庄严，展示风采。' },
+        '101100': { name: '火雷噬嗑', ci: '亨。利用狱。', desc: '咬碎障碍，恩威并施，铲除奸邪。' },
+        '101001': { name: '山火贲', ci: '亨。小利有攸往。', desc: '文饰美化，注重形式，小事可成。' },
+        '000001': { name: '山地剥', ci: '不利有攸往。', desc: '剥落之象，阴盛阳衰，宜静不宜动。' },
+        '100000': { name: '地雷复', ci: '亨。出入无疾，朋来无咎。', desc: '一阳来复，万物复苏，循环往复。' },
+        '100111': { name: '天雷无妄', ci: '元，亨，利，贞。其匪正有眚。', desc: '无妄之灾，真实无虚，顺其自然。' },
+        '111001': { name: '山天大畜', ci: '利贞。不家食，吉。', desc: '大畜积德，积小成大，适时而止。' },
+        '100001': { name: '山雷颐', ci: '贞吉。观颐，自求口实。', desc: '颐养生息，慎言节食，注重养生。' },
+        '011110': { name: '泽风大过', ci: '栋桡，利有攸往，亨。', desc: '非常时期，压力巨大，需独立支撑。' },
+        '010010': { name: '坎为水', ci: '习坎，有孚，维心亨，行有尚。', desc: '重重险陷，诚信脱险，不可轻举妄动。' },
+        '101101': { name: '离为火', ci: '利贞，亨。畜牝牛，吉。', desc: '附丽光明，柔顺中正，热情如火。' },
+        '011100': { name: '泽山咸', ci: '亨，利贞，取女吉。', desc: '感应沟通，心灵相通，婚姻吉利。' },
+        '001110': { name: '雷风恒', ci: '亨，无咎，利贞，利有攸往。', desc: '恒久之道，持之以恒，守常不变。' },
+        '111100': { name: '天山遁', ci: '亨，小利贞。', desc: '急流勇退，隐避避世，明哲保身。' },
+        '000101': { name: '雷天大壮', ci: '利贞。', desc: '壮大昌盛，阳气旺盛，宜守正道。' },
+        '001111': { name: '火地晋', ci: '康侯用锡马蕃庶，昼日三接。', desc: '旭日东升，步步高升，得志于时。' },
+        '101000': { name: '地火明夷', ci: '利艰贞。', desc: '光明受损，韬光养晦，艰难守正。' },
+        '101011': { name: '火泽睽', ci: '小事吉。', desc: '二女同居，其志不同，小事吉利。' },
+        '001010': { name: '水山蹇', ci: '利西南，不利东北。', desc: '寸步难行，险阻在前，宜停顿反省。' },
+        '010100': { name: '雷水解', ci: '利西南。', desc: '困难缓解，雷雨作解，赦免过失。' },
+        '110001': { name: '山泽损', ci: '有孚，元吉，无咎，可贞。', desc: '损下益上，先难后易，失小得大。' },
+        '100011': { name: '风雷益', ci: '利有攸往，利涉大川。', desc: '损上益下，助人为乐，大吉大利。' },
+        '111110': { name: '泽天夬', ci: '扬于王庭，孚号，有厉。', desc: '决断之时，清除小人，需警惕果决。' },
+        '011111': { name: '天风姤', ci: '女壮，勿用取女。', desc: '不期而遇，阴长阳消，防范不正。' },
+        '000110': { name: '泽地萃', ci: '亨。王假有庙，利见大人。', desc: '聚集汇合，精英荟萃，祭祀祈福。' },
+        '011000': { name: '地风升', ci: '元亨，用见大人，勿恤。', desc: '木生土中，步步高升，顺势发展。' },
+        '011010': { name: '泽水困', ci: '亨，贞，大人吉，无咎。', desc: '穷困艰难，才智难展，需坚守待机。' },
+        '010110': { name: '水风井', ci: '改邑不改井，无丧无得。', desc: '井养无穷，修德养人，安身立命。' },
+        '101110': { name: '火风鼎', ci: '元吉，亨。', desc: '鼎立稳重，除旧布新，三足鼎立。' },
+        '011101': { name: '泽火革', ci: '己日乃孚，元亨利贞，悔亡。', desc: '变革更新，去旧立新，顺应天命。' },
+        '100100': { name: '震为雷', ci: '亨。震来虩虩，笑言哑哑。', desc: '雷声震动，恐惧修省，临危不乱。' },
+        '001001': { name: '艮为山', ci: '艮其背，不获其身。', desc: '动静适时，适可而止，自我克制。' },
+        '001011': { name: '风山渐', ci: '女归吉，利贞。', desc: '循序渐进，善始善终，嫁娶吉利。' },
+        '110100': { name: '雷泽归妹', ci: '征凶，无攸利。', desc: '违背常理，少女出嫁，结果凶险。' },
+        '110101': { name: '风火家人', ci: '利女贞。', desc: '家庭伦理，相夫教子，家道正正。' },
+        '100101': { name: '雷火丰', ci: '亨，王假之，勿忧，宜日中。', desc: '丰大盛满，日中则仄，宜盛时防衰。' },
+        '001101': { name: '火山旅', ci: '小亨，旅贞吉。', desc: '旅行在外，漂泊不定，安定为上。' },
+        '011011': { name: '巽为风', ci: '小亨，利有攸往，利见大人。', desc: '顺从谦逊，无孔不入，如风随行。' },
+        '110110': { name: '兑为泽', ci: '亨，利贞。', desc: '喜悦沟通，朋友讲习，和睦相处。' },
+        '010011': { name: '风水涣', ci: '亨。王假有庙，利涉大川。', desc: '离散化解，乘风破浪，拯救危难。' },
+        '110010': { name: '水泽节', ci: '亨。苦节不可贞。', desc: '节制节约，适度调节，不可过分。' },
+        '110011': { name: '风泽中孚', ci: '豚鱼吉，利涉大川，利贞。', desc: '诚信感化，心中诚实，立于不败。' },
+        '001100': { name: '雷山小过', ci: '亨，利贞。可小事，不可大事。', desc: '小有过越，飞鸟遗音，宜小不宜大。' },
+        '101010': { name: '水火既济', ci: '亨，小利贞，初吉终乱。', desc: '大功告成，完美无缺，盛极必衰。' },
+        '010101': { name: '火水未济', ci: '亨，小狐汔济，濡其尾，无攸利。', desc: '未完成时，充满希望，需努力进取。' }
+      }
+    },
+
+    goToRitual(mode) {
+      this.currentMode = mode
+      this.currentPage = 'ritual'
+    },
+
+    goHome() {
+      this.currentPage = 'home'
+    },
+
+    goRitual() {
+      this.currentPage = 'ritual'
+    },
+
+    proceedToAction() {
+      if (this.currentMode === 'shake') {
+        this.actionTitle = '手动摇卦'
+        this.resetShake()
+      } else if (this.currentMode === 'manual') {
+        this.actionTitle = '手工指定'
+        this.resetManual()
+      }
+      this.currentPage = 'action'
+    },
+
+    resetShake() {
+      this.shakeCount = 0
+      this.shakeText = '抛掷铜钱 (0/6)'
+      this.currentLines = []
+      this.previewLines = []
+      this.coin1 = '字'
+      this.coin2 = '字'
+      this.coin3 = '字'
+      this.shakeResult = '准备抛掷'
+    },
+
+    resetManual() {
+      this.currentLines = [7, 7, 7, 7, 7, 7]
+      this.updatePreviewLines()
+    },
+
+    toggleLine(index) {
+      const states = [7, 8, 9, 6]
+      let currentIdx = states.indexOf(this.currentLines[index])
+      let nextIdx = (currentIdx + 1) % states.length
+      this.currentLines[index] = states[nextIdx]
+      this.updatePreviewLines()
+    },
+
+    updatePreviewLines() {
+      let lines = []
+      for (let i = 0; i < this.currentLines.length; i++) {
+        let value = this.currentLines[i]
+        lines.push({
+          index: i,
+          value: value,
+          isYang: value === 7 || value === 9,
+          isOld: value === 6 || value === 9
+        })
+      }
+      this.previewLines = lines
+    },
+
+    triggerShake() {
+      if (this.isShaking || this.shakeCount >= 6) return
+      
+      this.isShaking = true
+      this.shakeResult = '抛掷中...'
+      
+      setTimeout(() => {
+        this.performToss()
+        this.isShaking = false
+      }, 500)
+    },
+
+    shakeBtnClick() {
+      console.log('shakeBtnClick called, shakeCount:', this.shakeCount)
+      if (this.shakeCount >= 6) {
+        console.log('Calling showResult')
+        this.showResult()
+      } else {
+        this.triggerShake()
+      }
+    },
+
+    finishShake() {
+      this.showResult()
+    },
+
+    performToss() {
+      const results = [Math.random() < 0.5, Math.random() < 0.5, Math.random() < 0.5]
+      const backCount = results.filter(r => r).length
+
+      this.coin1 = results[0] ? '背' : '字'
+      this.coin2 = results[1] ? '背' : '字'
+      this.coin3 = results[2] ? '背' : '字'
+
+      let yaoValue
+      if (backCount === 1) { yaoValue = 7; this.shakeResult = '少阳' }
+      else if (backCount === 2) { yaoValue = 8; this.shakeResult = '少阴' }
+      else if (backCount === 3) { yaoValue = 9; this.shakeResult = '老阳' }
+      else { yaoValue = 6; this.shakeResult = '老阴' }
+
+      this.currentLines.push(yaoValue)
+      this.previewLines.push({
+        value: yaoValue,
+        isYang: yaoValue === 7 || yaoValue === 9,
+        isOld: yaoValue === 6 || yaoValue === 9
+      })
+
+      this.shakeCount++
+      this.shakeText = '抛掷铜钱 (' + this.shakeCount + '/6)'
+
+      try {
+        vibrator.vibrate(100)
+      } catch (e) {}
+
+      if (this.shakeCount >= 6) {
+        this.shakeText = '起卦完成'
+      }
+    },
+
+    startDivination(mode) {
+      this.currentLines = []
+      
+      if (mode === 'auto') {
+        for (let i = 0; i < 6; i++) {
+          const vals = [6, 7, 8, 9]
+          this.currentLines.push(vals[Math.floor(Math.random() * 4)])
+        }
+      } else if (mode === 'time') {
+        const now = new Date()
+        const seed = now.getFullYear() + (now.getMonth() + 1) * 31 + now.getDate() * 12 + now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()
+        
+        for (let i = 0; i < 6; i++) {
+          let r = Math.sin(seed + i) * 10000
+          r = r - Math.floor(r)
+          if (r < 0.25) this.currentLines.push(6)
+          else if (r < 0.5) this.currentLines.push(7)
+          else if (r < 0.75) this.currentLines.push(8)
+          else this.currentLines.push(9)
+        }
+      }
+
+      this.showResult()
+    },
+
+    showResult() {
+      let originalBinary = ''
+      let changedBinary = ''
+      let hasChange = false
+
+      for (let i = 5; i >= 0; i--) {
+        let val = this.currentLines[i]
+        let isYang = val === 7 || val === 9
+        originalBinary += isYang ? '1' : '0'
+
+        let changedIsYang = val === 7 || val === 6
+        changedBinary += changedIsYang ? '1' : '0'
+        
+        if (val === 6 || val === 9) hasChange = true
+      }
+
+      let guaData = this.hexagramData[originalBinary]
+      if (!guaData) {
+        guaData = { name: '未知卦', ci: '数据缺失', desc: '请重新起卦' }
+      }
+      this.resultGua = guaData
+      
+      let lines = []
+      for (let i = 0; i < this.currentLines.length; i++) {
+        let v = this.currentLines[i]
+        lines.push({ value: v, isYang: v === 7 || v === 9, isOld: v === 6 || v === 9 })
+      }
+      this.resultLines = lines
+
+      if (hasChange) {
+        this.showChange = true
+        let changedGuaData = this.hexagramData[changedBinary]
+        if (!changedGuaData) {
+          changedGuaData = { name: '未知卦', ci: '数据缺失' }
+        }
+        this.changedGua = changedGuaData
+        
+        let cLines = []
+        for (let i = 0; i < this.currentLines.length; i++) {
+          let v = this.currentLines[i]
+          let changedVal = v
+          if (v === 6) changedVal = 9
+          else if (v === 9) changedVal = 6
+          cLines.push({ 
+            value: changedVal,
+            isYang: changedVal === 7 || changedVal === 9,
+            isOld: v === 6 || v === 9
+          })
+        }
+        this.changedLines = cLines
+      } else {
+        this.showChange = false
+      }
+
+      try {
+        vibrator.vibrate(200)
+      } catch (e) {}
+
+      this.currentPage = 'result'
+    },
+
+    resetApp() {
+      this.currentPage = 'home'
+      this.currentLines = []
+      this.previewLines = []
+      this.shakeCount = 0
+    }
+  }
+</script>
+
+<style>
+  .container {
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #000000;
+    width: 100%;
+    height: 100%;
+    padding-left: 50px;
+    padding-right: 50px;
+  }
+
+  .page {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .result-page {
+    justify-content: flex-start;
+    padding-top: 40px;
+    padding-bottom: 100px;
+  }
+
+  .title {
+    font-size: 72px;
+    font-weight: bold;
+    color: #fbbf24;
+    margin-top: 35px;
+  }
+
+  .title-small {
+    font-size: 54px;
+    font-weight: bold;
+    color: #fbbf24;
+    margin-top: 28px;
+    margin-bottom: 24px;
+  }
+
+  .subtitle {
+    font-size: 30px;
+    color: #9ca3af;
+    margin-bottom: 28px;
+  }
+
+  .menu-list {
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 35px;
+  }
+
+  .menu-item {
+    width: 380px;
+    height: 96px;
+    background-color: #1f2937;
+    border-radius: 24px;
+    text-align: center;
+    line-height: 96px;
+    font-size: 34px;
+    color: #ffffff;
+    margin-bottom: 22px;
+  }
+
+  .card {
+    width: 100%;
+    background-color: #111827;
+    border-radius: 22px;
+    padding: 22px;
+    margin-bottom: 22px;
+  }
+
+  .rule-title {
+    font-size: 32px;
+    font-weight: bold;
+    color: #fbbf24;
+    margin-bottom: 10px;
+  }
+
+  .rule-text {
+    font-size: 24px;
+    color: #d1d5db;
+  }
+
+  .notice {
+    font-size: 24px;
+    color: #9ca3af;
+    text-align: center;
+  }
+
+  .mt {
+    margin-top: 24px;
+  }
+
+  .btn {
+    width: 340px;
+    height: 90px;
+    background-color: #fbbf24;
+    border-radius: 45px;
+    text-align: center;
+    line-height: 90px;
+    font-size: 34px;
+    font-weight: bold;
+    color: #000000;
+    margin-top: 24px;
+  }
+
+  .btn-outline {
+    width: 340px;
+    height: 90px;
+    border-width: 2px;
+    border-color: #4b5563;
+    border-radius: 45px;
+    text-align: center;
+    line-height: 90px;
+    font-size: 34px;
+    color: #9ca3af;
+    margin-top: 18px;
+  }
+
+  .coin-area {
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+
+  .coin-row {
+    flex-direction: row;
+    gap: 38px;
+  }
+
+  .coin {
+    width: 96px;
+    height: 96px;
+    border-radius: 48px;
+    border-width: 5px;
+    border-color: #fbbf24;
+    text-align: center;
+    line-height: 96px;
+    font-size: 32px;
+    font-weight: bold;
+    color: #fbbf24;
+  }
+
+  .result-text {
+    font-size: 32px;
+    color: #fbbf24;
+    margin-top: 15px;
+  }
+
+  .shake-result {
+    width: 100%;
+    text-align: center;
+    font-size: 32px;
+    color: #fbbf24;
+    margin-top: 15px;
+  }
+
+  .hexagram-container {
+    flex-direction: column-reverse;
+    align-items: center;
+    justify-content: center;
+    margin: 28px 0;
+  }
+
+  .yao-row {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    height: 36px;
+    margin-bottom: 11px;
+  }
+
+  .yang-line {
+    width: 200px;
+    height: 100%;
+    background-color: #ffffff;
+    border-radius: 5px;
+  }
+
+  .yin-line {
+    width: 200px;
+    height: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .yin-line-left {
+    width: 80px;
+    height: 100%;
+    background-color: #ffffff;
+    border-radius: 5px;
+  }
+
+  .yin-line-right {
+    width: 80px;
+    height: 100%;
+    background-color: #ffffff;
+    border-radius: 5px;
+  }
+
+  .yin-line-space {
+    width: 40px;
+  }
+
+  .line {
+    width: 80px;
+    height: 100%;
+    background-color: #ffffff;
+    border-radius: 5px;
+  }
+
+  .old-mark {
+    width: 30px;
+    text-align: center;
+    font-size: 24px;
+    color: #ef4444;
+    margin-left: 10px;
+  }
+
+  .hexagram-display {
+    flex-direction: column-reverse;
+    align-items: center;
+    justify-content: center;
+    margin: 28px 0;
+  }
+
+  .hexagram-display.small .yao-row {
+    transform: scale(0.8);
+    transform-origin: center;
+  }
+
+  .change-section {
+    flex-direction: column;
+    align-items: center;
+    margin-top: 28px;
+  }
+
+  .result-title {
+    font-size: 58px;
+    font-weight: bold;
+    color: #fbbf24;
+  }
+
+  .result-subtitle {
+    font-size: 30px;
+    color: #9ca3af;
+    margin-bottom: 18px;
+  }
+
+  .result-name {
+    font-size: 40px;
+    font-weight: bold;
+    color: #fbbf24;
+    margin-top: 11px;
+    margin-bottom: 30px;
+  }
+
+  .card-title {
+    font-size: 32px;
+    font-weight: bold;
+    color: #fbbf24;
+    margin-bottom: 10px;
+  }
+
+  .card-label {
+    font-size: 32px;
+    font-weight: bold;
+    color: #fbbf24;
+  }
+
+  .card-colon {
+    font-size: 32px;
+    font-weight: bold;
+    color: #fbbf24;
+    margin-right: 10px;
+  }
+
+  .card-content {
+    font-size: 24px;
+    color: #d1d5db;
+  }
+</style>
