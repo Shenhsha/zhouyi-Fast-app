@@ -52,19 +52,18 @@
       <!-- 卦象预览 -->
       <div class="hexagram-container">
         <div class="yao-row" for="{{line in previewLines}}" @click="toggleLine(line.index)" if="{{currentMode === 'manual'}}">
-          <div class="yang-line" if="{{line.isYang}}"></div>
+          <div class="{{line.isOld ? 'yang-line old-line' : 'yang-line'}}" if="{{line.isYang}}"></div>
           <div class="yin-line" if="{{!line.isYang}}">
-            <div class="line"></div>
-            <div class="line"></div>
+            <div class="{{line.isOld ? 'line old-line' : 'line'}}"></div>
+            <div class="{{line.isOld ? 'line old-line' : 'line'}}"></div>
           </div>
         </div>
         <div class="yao-row" for="{{line in previewLines}}" elif="{{currentMode === 'shake'}}">
-          <div class="yang-line" if="{{line.isYang}}"></div>
+          <div class="{{line.isOld ? 'yang-line old-line' : 'yang-line'}}" if="{{line.isYang}}"></div>
           <div class="yin-line" if="{{!line.isYang}}">
-            <div class="line"></div>
-            <div class="line"></div>
+            <div class="{{line.isOld ? 'line old-line' : 'line'}}"></div>
+            <div class="{{line.isOld ? 'line old-line' : 'line'}}"></div>
           </div>
-          <text class="old-mark" if="{{line.isOld}}">{{line.value === 9 ? '○' : '×'}}</text>
         </div>
       </div>
 
