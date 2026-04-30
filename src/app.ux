@@ -17,8 +17,8 @@ export default {
   },
 
   onError(err) {
-    console.log(`[lifecycle] [app] onError errmsg: ${err.message}`)
-    console.log(`[lifecycle] [app] onError error stack: ${err.stack}`)
+    console.log(`[lifecycle] [app] onError errmsg: ${err.message}`);
+    console.log(`[lifecycle] [app] onError error stack: ${err.stack}`);
   }
 }
 </script>

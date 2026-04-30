@@ -1,0 +1,15 @@
+{
+  "name": "zhouyi",
+  "version": "1.0.0",
+  "description": "周易占卜快应用",
+  "main": "app.ux",
+  "scripts": {
+    "build": "aiot build",
+    "release": "aiot release",
+    "start": "aiot start"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@anthropic-ai/aiot-toolkit": "^2.0.0"
+  }
+}
