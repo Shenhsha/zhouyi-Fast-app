@@ -111,10 +111,6 @@
         <text class="card-label">本</text><text class="card-colon">:</text><text class="card-content">{{resultGua.ci}}</text>
       </div>
 
-      <div class="card rule-card">
-        <text class="card-label">断</text><text class="card-colon">:</text><text class="card-content">{{interpretationRule}}</text>
-      </div>
-
       <div class="card" for="{{item in interpretationTexts}}">
         <text class="card-label">{{item.label}}</text>
         <text class="yao-text">{{item.text}}</text>
@@ -384,11 +380,6 @@
   .card-content {
     font-size: 24px;
     color: #d1d5db;
-  }
-
-  .rule-card {
-    border-left-width: 4px;
-    border-left-color: #fbbf24;
   }
 
   .yao-text {
