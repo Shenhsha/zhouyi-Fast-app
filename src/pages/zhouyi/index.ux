@@ -9,6 +9,7 @@
         <text class="menu-item" @click="goToRitual('manual')">手工指定</text>
         <text class="menu-item" @click="startDivination('time')">时间起卦</text>
         <text class="menu-item" @click="startDivination('auto')">手环自动</text>
+        <text class="menu-item" @click="showRules()">断卦规则</text>
       </div>
     </div>
 
@@ -30,6 +31,49 @@
       <text class="title-small mt">起卦须知</text>
       <text class="notice">集中意念，心中默念所测之事，一事一卦。</text>
       <text class="btn" @click="proceedToAction()">开始起卦</text>
+      <text class="btn-outline" @click="goHome()">返回</text>
+    </div>
+
+    <!-- 断卦规则页面 -->
+    <div class="page" if="{{currentPage === 'rules'}}" style="padding-top: 30px;">
+      <text class="title-small">断卦规则</text>
+      <text class="subtitle">根据变爻数量参照不同内容</text>
+
+      <div class="card">
+        <text class="rule-title">无变爻（0个）</text>
+        <text class="rule-text">看本卦卦辞</text>
+      </div>
+
+      <div class="card">
+        <text class="rule-title">一爻变</text>
+        <text class="rule-text">看本卦变爻爻辞</text>
+      </div>
+
+      <div class="card">
+        <text class="rule-title">二爻变</text>
+        <text class="rule-text">看两个变爻爻辞，以上爻为主</text>
+      </div>
+
+      <div class="card">
+        <text class="rule-title">三爻变</text>
+        <text class="rule-text">看本卦卦辞为主，变卦卦辞为辅</text>
+      </div>
+
+      <div class="card">
+        <text class="rule-title">四爻变</text>
+        <text class="rule-text">看变卦两个不变爻爻辞，以下爻为主</text>
+      </div>
+
+      <div class="card">
+        <text class="rule-title">五爻变</text>
+        <text class="rule-text">看变卦中唯一不变的爻辞</text>
+      </div>
+
+      <div class="card">
+        <text class="rule-title">六爻全变</text>
+        <text class="rule-text">乾坤用九用六，其他看变卦卦辞</text>
+      </div>
+
       <text class="btn-outline" @click="goHome()">返回</text>
     </div>
 
@@ -74,49 +118,59 @@
 
     <!-- 结果页面 -->
     <div class="page result-page" if="{{currentPage === 'result'}}">
-      <text class="result-title" style="margin-top: {{showChange ? 520 : 180}}px;">{{resultGua.name}}</text>
-      <text class="result-subtitle">{{showChange ? '本卦' : '卦象'}}</text>
+      <scroll class="result-scroll" scroll-y="true">
+        <text class="result-title">{{resultGua.name}}</text>
+        <text class="result-subtitle">{{showChange ? '本卦' : '卦象'}}</text>
 
-      <div class="hexagram-display">
-        <div class="yao-row" for="{{line in resultLines}}">
-          <div class="{{line.isOld ? 'yang-line old-line' : 'yang-line'}}" if="{{line.isYang}}"></div>
-          <div class="yin-line" if="{{!line.isYang}}">
-            <div class="{{line.isOld ? 'yin-line-left old-line' : 'yin-line-left'}}"></div>
-            <div class="yin-line-space"></div>
-            <div class="{{line.isOld ? 'yin-line-right old-line' : 'yin-line-right'}}"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="change-section" if="{{showChange}}">
-        <text class="result-title" style="margin-top: 20px; font-size: 48px;">{{changedGua.name}}</text>
-        <text class="result-subtitle" style="margin-top: 10px; margin-bottom: 18px;">变卦</text>
-        <div class="hexagram-display small">
-          <div class="yao-row" for="{{line in changedLines}}">
-            <div class="yang-line" if="{{line.isYang}}"></div>
+        <div class="hexagram-display">
+          <div class="yao-row" for="{{line in resultLines}}">
+            <div class="{{line.isOld ? 'yang-line old-line' : 'yang-line'}}" if="{{line.isYang}}"></div>
             <div class="yin-line" if="{{!line.isYang}}">
-              <div class="yin-line-left"></div>
+              <div class="{{line.isOld ? 'yin-line-left old-line' : 'yin-line-left'}}"></div>
               <div class="yin-line-space"></div>
-              <div class="yin-line-right"></div>
+              <div class="{{line.isOld ? 'yin-line-right old-line' : 'yin-line-right'}}"></div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="card" if="{{showChange}}">
-        <text class="card-label">变</text><text class="card-colon">:</text><text class="card-content">{{changedGua.ci}}</text>
-      </div>
+        <div class="change-section" if="{{showChange}}">
+          <text class="result-title" style="font-size: 48px;">{{changedGua.name}}</text>
+          <text class="result-subtitle" style="margin-top: 10px; margin-bottom: 18px;">变卦</text>
+          <div class="hexagram-display small">
+            <div class="yao-row" for="{{line in changedLines}}">
+              <div class="yang-line" if="{{line.isYang}}"></div>
+              <div class="yin-line" if="{{!line.isYang}}">
+                <div class="yin-line-left"></div>
+                <div class="yin-line-space"></div>
+                <div class="yin-line-right"></div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <div class="card">
-        <text class="card-label">本</text><text class="card-colon">:</text><text class="card-content">{{resultGua.ci}}</text>
-      </div>
+        <div class="card" if="{{showChange}}">
+          <div class="card-inline">
+            <text class="card-label">变</text><text class="card-colon">:</text>
+          </div>
+          <text class="card-content">{{changedGua.ci}}</text>
+        </div>
 
-      <div class="card" for="{{item in interpretationTexts}}">
-        <text class="card-label">{{item.label}}</text>
-        <text class="yao-text">{{item.text}}</text>
-      </div>
+        <div class="card">
+          <div class="card-inline">
+            <text class="card-label">本</text><text class="card-colon">:</text>
+          </div>
+          <text class="card-content">{{resultGua.ci}}</text>
+        </div>
 
-      <text class="btn" @click="resetApp()">重新起卦</text>
+        <div class="card" for="{{item in interpretationTexts}}">
+          <div class="card-inline">
+            <text class="card-label">{{item.label}}</text><text class="card-colon">:</text>
+          </div>
+          <text class="yao-text">{{item.text}}</text>
+        </div>
+
+        <text class="btn" @click="resetApp()">重新起卦</text>
+      </scroll>
     </div>
   </div>
 </template>
@@ -143,6 +197,13 @@
 
   .result-page {
     justify-content: flex-start;
+  }
+
+  .result-scroll {
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
     padding-top: 40px;
     padding-bottom: 100px;
   }
@@ -193,6 +254,12 @@
     border-radius: 22px;
     padding: 22px;
     margin-bottom: 22px;
+    flex-direction: column;
+  }
+
+  .card-inline {
+    flex-direction: row;
+    align-items: center;
   }
 
   .rule-title {
@@ -493,6 +560,10 @@
 
     goRitual() {
       this.currentPage = 'ritual'
+    },
+
+    showRules() {
+      this.currentPage = 'rules'
     },
 
     proceedToAction() {
