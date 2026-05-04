@@ -4,7 +4,16 @@
       "Bash(git add *)",
       "Bash(gh auth *)",
       "Bash(git config *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "WebSearch",
+      "Bash(curl -s -L --max-time 15 \"https://iot.mi.com/vela/quickapp/zh/tools/\")",
+      "Bash(curl -s -L --max-time 15 \"https://iot.mi.com/vela/quickapp/zh/tools/manifest.html\")",
+      "Bash(mkdir -p /tmp/xiaomi-vela-docs)",
+      "Bash(unzip -o \"C:/Users/zhang/Downloads/Compressed/xiaomi-vela-docs.zip\" -d /tmp/xiaomi-vela-docs)",
+      "Bash(xargs grep *)",
+      "Bash(git push *)",
+      "Bash(gh release *)",
+      "Bash(grep -v \"^[+-]\\\\s*$\")"
     ]
   }
 }
